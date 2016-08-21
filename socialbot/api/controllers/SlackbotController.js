@@ -1,4 +1,5 @@
 var RtmClient = require('@slack/client').RtmClient;
+var WebClient = require('@slack/client').WebClient;
 var matchFormatHelper = require('../utils/MatchFormatter.js');
 
 // The memory data store is a collection of useful functions we can include in our RtmClient
@@ -9,6 +10,13 @@ var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 var token = process.env.SLACK_API_TOKEN;
 
 var rtm = new RtmClient(token, {
+  // Sets the level of logging we require
+  logLevel: 'error',
+  // Initialise a data store for our client, this will load additional helper functions for the storing and retrieval of data
+  dataStore: new MemoryDataStore()
+});
+
+var web = new WebClient (token, {
   // Sets the level of logging we require
   logLevel: 'error',
   // Initialise a data store for our client, this will load additional helper functions for the storing and retrieval of data
@@ -37,14 +45,34 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
   console.log ('new message', message);
-  if (message.text === 'list matches'){
-  	var options = {
-  		status : 'active'
-  	};
-  	MatchService.getAllMatches (options, function (err, matches){
-  		//console.log (matches);
-  		var text =matchFormatHelper.formatMatch(matches);
-		rtm.sendMessage(text, rtm.dataStore.getChannelByName("general").id);
-  	});
+
+  switch(message.text) {
+  	case 'list matches' :
+  	  	var options = {
+  			status : 'active'
+	  	};
+	  	MatchService.getAllMatches (options, function (err, matches){
+	  		//console.log (matches);
+	  		var text =matchFormatHelper.formatMatch(matches);
+			rtm.sendMessage(text, rtm.dataStore.getChannelByName("general").id);
+	  	});
+  		break;
+
+  	case 'abc':
+  		rtm.sendMessage('there is a new match.. Would you like to join?', rtm.dataStore.getChannelByName("general").id , function messageSent(a, b, c) {
+    		// optionally, you can supply a callback to execute once the message has been sent
+    		//var reactions = new rtm.ReactionsFacet();
+    		//reactions.add ('thumbsup')
+    		console.log (a,b,c);
+    		var options = {
+    			channel : rtm.dataStore.getChannelByName("general").id,
+    			timestamp : b.ts
+    		}
+    		web.reactions.add ('thumbsup', options);
+    		web.reactions.add ('thumbsdown', options);
+  		});
+  		break;
+  	default :
+  		break;
   }
 });
