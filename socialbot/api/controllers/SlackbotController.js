@@ -1,3 +1,4 @@
+var async = require('async');
 var RtmClient = require('@slack/client').RtmClient;
 var WebClient = require('@slack/client').WebClient;
 var matchFormatHelper = require('../utils/MatchFormatter.js');
@@ -52,26 +53,26 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
   			status : 'active'
 	  	};
 	  	MatchService.getAllMatches (options, function (err, matches){
-	  		//console.log (matches);
-	  		var text =matchFormatHelper.formatMatch(matches);
-			rtm.sendMessage(text, rtm.dataStore.getChannelByName("general").id);
+	  		var i=0;
+	  		async.each (matches, function (match, fn){
+	
+					var text = '';
+					text = text.concat(++i)
+						.concat(".")
+						.concat(matchFormatHelper.formatMatch(match));
+					rtm.sendMessage(text, rtm.dataStore.getChannelByName("general").id, function (err, message){
+						var options = {
+		    				channel : rtm.dataStore.getChannelByName("general").id,
+		    				timestamp : message.ts
+			    		}
+			    		web.reactions.add ('thumbsup', options);
+			    		web.reactions.add ('thumbsdown', options);
+			    		fn ();
+					});
+	  		});
 	  	});
   		break;
 
-  	case 'abc':
-  		rtm.sendMessage('there is a new match.. Would you like to join?', rtm.dataStore.getChannelByName("general").id , function messageSent(a, b, c) {
-    		// optionally, you can supply a callback to execute once the message has been sent
-    		//var reactions = new rtm.ReactionsFacet();
-    		//reactions.add ('thumbsup')
-    		console.log (a,b,c);
-    		var options = {
-    			channel : rtm.dataStore.getChannelByName("general").id,
-    			timestamp : b.ts
-    		}
-    		web.reactions.add ('thumbsup', options);
-    		web.reactions.add ('thumbsdown', options);
-  		});
-  		break;
   	default :
   		break;
   }

@@ -2,7 +2,7 @@
 
 module.exports = {
 
-	formatMatch : function (matches){
+	formatMatches : function (matches){
 		if (matches && matches.length > 0){
 			var formattedText = '';
 			for (var i=0; i < matches.length; i=i+1){
@@ -13,6 +13,13 @@ module.exports = {
 											 .concat ('\n');
 			}
 			return formattedText;
+		}
+		return '';
+	},
+
+	formatMatch : function (match){
+		if (match ){
+			return (match.name + ", " + new Date(match.startTime))
 		}
 		return '';
 	} 
